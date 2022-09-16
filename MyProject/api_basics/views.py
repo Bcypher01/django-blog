@@ -2,8 +2,8 @@ from cgitb import lookup
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
 from rest_framework.parsers import JSONParser
-from .models import Article
-from .serializers import ArticleSerializer
+from .models import Article, User
+from .serializers import ArticleSerializer, UserSerializer
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -81,12 +81,11 @@ class GenericAPIView(generics.GenericAPIView,
    
     def delete(self, request, id):
         return self.destroy(request, id)
-        
-   
     
+        
 
 class ArticleAPIView(APIView):
-    def get(self):
+    def get(self,request):
         articles = Article.objects.all()
         serializer = ArticleSerializer(articles, many=True)
         return Response(serializer.data)
@@ -99,7 +98,50 @@ class ArticleAPIView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+
+class UserAPIView(APIView):
+    def get(self, request):
+        users = User.objects.all()
+        serializer = UserSerializer(users, many=True)
+        return Response(serializer.data)
+    
+    def post(self, request):
+        serializer = UserSerializer(data=request.data)
         
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+     
+class UserDetail(APIView):
+    def get_object(self, id):
+        try:
+            return User.objects.get(id=id)
+        
+        except User.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+    def get(self, request, id):
+        user = self.get_object(id)
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
+        
+    def put(self, request, id):
+        user = self.get_object(id)
+        serializer = UserSerializer(user, data=request.data)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, staus=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, id):
+        user = self.get_object(id)
+        
+        user.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+        
+
     
 class ArticleDetails(APIView):
     def get_object(self, id):
