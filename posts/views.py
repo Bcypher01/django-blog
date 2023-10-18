@@ -61,3 +61,27 @@ def post_detail(request: Request, post_id: int):
     }
 
     return Response(data=response, status=status.HTTP_200_OK)
+
+
+@api_view(http_method_names=["PUT"])
+def update_post(request: Request, post_id: int):
+    post = get_object_or_404(Post, pk=post_id)
+
+    data = request.data
+
+    serializer = PostSerializer(instance=post, data=data)
+
+    if serializer.is_valid():
+        serializer.save()
+
+        response = {
+            "message": "Post updated successfully",
+            "data": serializer.data
+        }
+        return Response(data=response, status=status.HTTP_200_OK)
+    return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(http_method_names=["DELETE"])
+def delete_post(request: Request, post_id: int):
+    pass
